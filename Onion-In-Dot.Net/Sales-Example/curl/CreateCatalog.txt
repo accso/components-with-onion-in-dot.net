@@ -1,0 +1,13 @@
+﻿curl --location --request POST 'http://localhost:5101/catalog' \
+--header 'Content-Type: application/json' \
+--data-raw '{
+    "Name": "MySweets",
+    "Description": "They are so sweet",
+    "Products": [
+        {
+            "Number": "IT1",
+            "Name": "Wine Gums",
+            "Price": 2
+        }
+    ]
+}'

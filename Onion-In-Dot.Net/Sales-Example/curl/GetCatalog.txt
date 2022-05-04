@@ -1,0 +1,1 @@
+﻿curl --location --request GET 'http://localhost:5101/catalog/MySweets'

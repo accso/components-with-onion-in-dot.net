@@ -1,0 +1,2 @@
+﻿curl --location --request GET 'http://localhost:5101/catalog/MySweets/product/IT14' \
+--header 'Content: application/json'
