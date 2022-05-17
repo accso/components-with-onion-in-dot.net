@@ -7,9 +7,9 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Ecommerce-Example", "Ecomme
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Ecommerce-Architecture-Tests", "Ecommerce-Architecture-Tests\Ecommerce-Architecture-Tests.csproj", "{3275B194-F3AE-4D2C-93BD-C6D564481364}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Sales-Example", "Sales-Example\Sales-Example.csproj", "{452A614C-8E37-4B9C-B1A0-5BA321DE55C7}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Sales-Example", "Sales-Example\Sales-Example.csproj", "{452A614C-8E37-4B9C-B1A0-5BA321DE55C7}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Sales-Example-Architecture-Tests", "Sales-Example-Architecture-Tests\Sales-Example-Architecture-Tests.csproj", "{0EF572CC-A4C4-49CD-8DD1-FE8A0485D97F}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Sales-Example-Architecture-Tests", "Sales-Example-Architecture-Tests\Sales-Example-Architecture-Tests.csproj", "{0EF572CC-A4C4-49CD-8DD1-FE8A0485D97F}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

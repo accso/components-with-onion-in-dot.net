@@ -24,7 +24,7 @@ namespace Accso.Ecommerce.Onion.Sales.Core.Application.Service
             }
 
             var coreCatalog = CatalogConverter.ConversionToCoreModel(catalog);
-            catalogRepository.CreateCatalog(coreCatalog);
+            catalogRepository.CreateCatalog(CatalogConverter.ConversionToService(coreCatalog));
             var createdCatalog = CatalogConverter.ConversionToService(coreCatalog);
             messaging.SendNewCatalogCreated(createdCatalog);
             return catalog;
@@ -34,10 +34,10 @@ namespace Accso.Ecommerce.Onion.Sales.Core.Application.Service
         {
             var foundCatalog = FindCoreCatalogByName(name);
 
-            return CatalogConverter.ConversionToService(foundCatalog);
+            return foundCatalog;
         }
 
-        private Accso.Ecommerce.Onion.Sales.Core.Domain.Model.Catalog FindCoreCatalogByName(String name)
+        private Catalog FindCoreCatalogByName(String name)
         {
             var foundCatalog = this.catalogRepository.FindCatalogByName(name);
 
@@ -51,21 +51,23 @@ namespace Accso.Ecommerce.Onion.Sales.Core.Application.Service
         public Catalog AddProduct(string catalogName, Product newProduct)
         {
             var catalogToAddProduct = FindCoreCatalogByName(catalogName);
-            if (catalogToAddProduct.GetProduct(newProduct.Number) != null)
+            var coreCatalog = CatalogConverter.ConversionToCoreModel(catalogToAddProduct);
+            if (coreCatalog.GetProduct(newProduct.Number) != null)
             {
                 throw new ProductAlreadyExistsException(newProduct.Name);
             }
-            var convertedNdewProduct = ProductConverter.ConversionToCoreModel(newProduct);
-            catalogToAddProduct.AddProductToCatalog(convertedNdewProduct);
+            var convertedNewProduct = ProductConverter.ConversionToCoreModel(newProduct);
+            coreCatalog.AddProductToCatalog(convertedNewProduct);
             this.catalogRepository.UpdateCatalog(catalogToAddProduct);
             this.messaging.SendNewProductCreated(catalogName, newProduct);
-            return CatalogConverter.ConversionToService(catalogToAddProduct);
+            return CatalogConverter.ConversionToService(coreCatalog);
         }
 
         public Product FindProductByName(string catalogName, string productNumber)
         {
             var catalogWithRequestedProduct = FindCoreCatalogByName(catalogName);
-            var foundProduct = catalogWithRequestedProduct.GetProduct(productNumber);
+            var coreCatalog = CatalogConverter.ConversionToCoreModel(catalogWithRequestedProduct);
+            var foundProduct = coreCatalog.GetProduct(productNumber);
             if (foundProduct == null)
             {
                 throw new ProductNotFoundException(productNumber);

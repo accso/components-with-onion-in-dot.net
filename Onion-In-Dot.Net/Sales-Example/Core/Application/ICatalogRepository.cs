@@ -1,4 +1,5 @@
-﻿using Accso.Ecommerce.Onion.Sales.Core.Domain.Model;
+﻿
+using Accso.Ecommerce.Onion.Sales.Core.Application.Service.Model;
 
 namespace Accso.Ecommerce.Onion.Sales.Core.Application
 {

@@ -1,5 +1,5 @@
 ﻿using Accso.Ecommerce.Onion.Sales.Core.Application;
-using Accso.Ecommerce.Onion.Sales.Core.Domain.Model;
+using Accso.Ecommerce.Onion.Sales.Core.Application.Service.Model;
 using Accso.Ecommerce.Onion.Sales.Infrastructure.Persistence.Conversion;
 
 namespace Accso.Ecommerce.Onion.Sales.Infrastructure.Persistence
