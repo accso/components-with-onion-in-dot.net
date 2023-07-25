@@ -1,119 +1,132 @@
-﻿using ArchUnitNET.Fluent;
+﻿using ArchUnitNET.Domain;
+using ArchUnitNET.Fluent;
 using ArchUnitNET.Loader;
 using ArchUnitNET.xUnit;
 using System;
-using System.Collections.Generic;
 using System.Linq;
-using System.Reflection;
 using Xunit;
 
 namespace Sales_Example_Architecture_Tests
 {
     public class OnionDependenciesTest
     {
-        private static readonly string PackagePrefix = "Accso.Ecommerce.Onion.Sales.";
-        private static readonly Func<Assembly, bool> IsAssemblyConsidered = delegate (Assembly assemblyUnderEvaluation)
+        private const string PACKAGE_PREFIX = "Accso.Ecommerce.Onion.Sales.";
+
+        private readonly IObjectProvider<IType> ApiLayer = ArchRuleDefinition.Types().That()
+               .ResideInNamespace(CreateNamespaceRegExpr("Api.*"))
+               .As("API Layer");
+
+        private readonly IObjectProvider<IType> ApplicationLayer = ArchRuleDefinition.Types().That()
+            .ResideInNamespace(CreateNamespaceRegExpr("Core.Application.*"), true)
+                        .As("Application Layer");
+
+        private readonly IObjectProvider<IType> DomainLayer = ArchRuleDefinition.Types().That()
+           .ResideInNamespace(CreateNamespaceRegExpr("Core.Domain"), true)
+                       .As("Domain Layer");
+
+        private readonly IObjectProvider<IType> InfrastructureLayer = ArchRuleDefinition.Types().That()
+          .ResideInNamespace(CreateNamespaceRegExpr(".Infrastructure.*"), true)
+                      .As("Infra Layer");
+
+        private readonly IObjectProvider<IType> UiLayer = ArchRuleDefinition.Types().That()
+          .ResideInNamespace(CreateNamespaceRegExpr("UI"), true)
+                      .As("UI Layer");
+
+        private readonly ArchUnitNET.Domain.Architecture EcommerceArchitecture;
+
+        public OnionDependenciesTest()
+        {
+            EcommerceArchitecture = LoadAssembliesUnderConsideration();
+        }
+
+        private ArchUnitNET.Domain.Architecture LoadAssembliesUnderConsideration()
+            => new ArchLoader()
+                .LoadAssemblies(GetAssembliesForConsideration()).Build();
+
+        private System.Reflection.Assembly[] GetAssembliesForConsideration() => AppDomain.CurrentDomain.GetAssemblies()
+            .Where(assembly => IsAssemblyConsidered(assembly))
+            .ToArray();
+
+        private readonly Func<System.Reflection.Assembly, bool> IsAssemblyConsidered = delegate (System.Reflection.Assembly assemblyUnderEvaluation)
         {
             return assemblyUnderEvaluation.GetTypes()
             .Where(type => (type.IsInterface || type.IsClass)
             && !String.IsNullOrEmpty(type.Namespace)
-            && type.Namespace.StartsWith(PackagePrefix))
+            && type.Namespace.StartsWith(PACKAGE_PREFIX))
             .ToList().Count > 0;
         };
-        private static readonly List<Assembly> assembliesToConsiderForTest = AppDomain.CurrentDomain.GetAssemblies()
-            .Where(assembly => IsAssemblyConsidered(assembly))
-            .ToList();
-        private static readonly ArchUnitNET.Domain.Architecture onionSalesArchitecture = new ArchLoader()
-                .LoadAssemblies(assembliesToConsiderForTest.ToArray()).Build();
 
         [Fact]
-        public void Test_ShouldBeTrue_BecauseAPIMustOnlyDependOnApplication()
+        public void Test_Onion_LayerDomainMustOnlyDependOnItself()
         {
-            //given
-            var apiLayer = ArchRuleDefinition.Types().That()
-                .ResideInNamespace(CreateNamespaceRegExpr("Api.* "), true)
-                .As("API Layer");
-            var applicationLayer = ArchRuleDefinition.Types().That()
-                .ResideInNamespace(CreateNamespaceRegExpr("Core.Application.*"), true)
-                            .As("Application Layer");            
-            IArchRule onionAPIRule = ArchRuleDefinition.Types().That()
-               .Are(apiLayer).Should().OnlyDependOn(applicationLayer)
-               .Because("Only this allowed");
+            //assign
+            IArchRule onionRule = ArchRuleDefinition.Types().That()
+                 .Are(DomainLayer).Should().NotDependOnAny(ApplicationLayer)
+                 .AndShould().NotDependOnAny(InfrastructureLayer)
+                 .AndShould().NotDependOnAny(ApiLayer)
+                 .AndShould().NotDependOnAny(UiLayer)
+                 .Because("Domain layer must only depend on itself");
+
             //when + then
-           onionAPIRule.Check(onionSalesArchitecture);           
+            onionRule.Check(EcommerceArchitecture);
         }
 
         [Fact]
-        public void Test_ShouldBeTrue_BecauseApplicationMustOnlyDependOnDomain()
+        public void Test_Onion_ApplicationLayerMustOnlyDependOnDomain()
         {
-            //given            
-            var applicationLayer = ArchRuleDefinition.Types().That()
-                //the test fails if there is no whitespace after the asteriks. Please don't ask me why. :-)
-                .ResideInNamespace(CreateNamespaceRegExpr("Core.Application.* "), true)
-                            .As("Application Layer");
-            var domainLayer = ArchRuleDefinition.Types().That()
-                .ResideInNamespace(CreateNamespaceRegExpr("Core.Domain.*"), true)
-                .As("Domain Layer");
-            IArchRule onionApplicationRule = ArchRuleDefinition.Types().That()
-               .Are(applicationLayer).Should().OnlyDependOn(domainLayer)
-               .Because("Only this allowed");
+            //assign
+            IArchRule onionRule = ArchRuleDefinition.Types().That()
+                 .Are(ApplicationLayer).Should().NotDependOnAny(InfrastructureLayer)
+                 .AndShould().NotDependOnAny(ApiLayer)
+                 .AndShould().NotDependOnAny(UiLayer)
+                 .Because("Application layer must only depend on domain layer");
+
             //when + then
-           onionApplicationRule.Check(onionSalesArchitecture);
+            onionRule.Check(EcommerceArchitecture);
         }
 
         [Fact]
-        public void Test_ShouldBeTrue_BecauseDomainMustOnlyDependOnDomain()
+        public void Test_Onion_ApiLayerMustOnlyDependOnApplicationAndDomain()
         {
-            //given              
-            var domainLayer = ArchRuleDefinition.Types().That()
-                .ResideInNamespace(CreateNamespaceRegExpr("Core.Domain.*"), true)
-                .As("Domain Layer");
-            IArchRule onionDomainRule = ArchRuleDefinition.Types().That()
-               .Are(domainLayer).Should().OnlyDependOn(domainLayer)
-               .Because("Only this allowed");
+            //assign
+            IArchRule onionRule = ArchRuleDefinition.Types().That()
+                 .Are(ApiLayer).Should().NotDependOnAny(InfrastructureLayer)
+                 .AndShould().NotDependOnAny(UiLayer)
+                 .Because("Api layer must only depend on domain and application layer");
+
             //when + then
-            onionDomainRule.Check(onionSalesArchitecture);
+            onionRule.Check(EcommerceArchitecture);
         }
 
         [Fact]
-        public void Test_ShouldBeTrue_BecausePersistenceMustOnlyDependOnApplication()
+        public void Test_Onion_InfrastructureLayerMustOnlyDependOnApplicationAndDomain()
         {
-            //given
-            var persistenceLayer = ArchRuleDefinition.Types().That()
-               .ResideInNamespace(CreateNamespaceRegExpr("Infrastructure.Persistence.* "), true)
-               .As("Domain Layer");
-            var applicationLayer = ArchRuleDefinition.Types().That()
-                .ResideInNamespace(CreateNamespaceRegExpr("Core.Application.* "), true)
-                            .As("Application Layer");           
-            IArchRule onionPersistenceRule = ArchRuleDefinition.Types().That()
-               .Are(persistenceLayer).Should().OnlyDependOn(applicationLayer)
-               .Because("Only this allowed");
+            //assign
+            IArchRule onionRule = ArchRuleDefinition.Types().That()
+                 .Are(InfrastructureLayer).Should().NotDependOnAny(ApiLayer)
+                 .AndShould().NotDependOnAny(UiLayer)
+                 .Because("Infrastructure layer must only depend on domain and application layer");
+
             //when + then
-            onionPersistenceRule.Check(onionSalesArchitecture);
+            onionRule.Check(EcommerceArchitecture);
         }
 
         [Fact]
-        public void Test_ShouldBeTrue_BecauseMessagingMustOnlyDependOnApplication()
+        public void Test_Onion_UILayerMustOnlyDependOnApplicationAndDomain()
         {
-            //given
-            var messagingLayer = ArchRuleDefinition.Types().That()
-               .ResideInNamespace(CreateNamespaceRegExpr("Infrastructure.Messaging.* "), true)
-               .As("Domain Layer");
-            var applicationLayer = ArchRuleDefinition.Types().That()
-                .ResideInNamespace(CreateNamespaceRegExpr("Core.Application.*"), true)
-                            .As("Application Layer");
-            IArchRule onionMessagingRule = ArchRuleDefinition.Types().That()
-               .Are(messagingLayer).Should().OnlyDependOn(applicationLayer)
-               .Because("Only this allowed");
+            //assign
+            IArchRule onionRule = ArchRuleDefinition.Types().That()
+                 .Are(UiLayer).Should().NotDependOnAny(ApiLayer)
+                 .AndShould().NotDependOnAny(InfrastructureLayer)
+                 .Because("UI layer must only depend on domain and application layer");
+
             //when + then
-            onionMessagingRule.Check(onionSalesArchitecture);
+            onionRule.Check(EcommerceArchitecture);
         }
 
         private static string CreateNamespaceRegExpr(string lastPartOfNamespace)
         {
-            return string.Join("*.", PackagePrefix, lastPartOfNamespace);
+            return string.Join("*.", PACKAGE_PREFIX, lastPartOfNamespace);
         }
-
-
     }
 }
